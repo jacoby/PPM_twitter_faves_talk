@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Favorites </title>
+    <style>
+        body { background-color: grey ; }
+        .entry {
+            background-color: white ;
+            border-radius: 10px ;
+            border: 1px solid #666 ;
+            font-family: "Gill Sans MT" , Helvetica , Arial , Sans Serif ;
+            margin: 2px ;
+            padding: 5px ;
+            }
+        .entry a { 
+            text-decoration: none ;
+            }
+        .entry a:hover { 
+            text-decoration: underline ;
+            }
+        .entry .screen_name { 
+            font-weight: 800 ;
+            font-size: bigger ;
+            }
+        .entry a , .entry span { display: block ; }
+    </style>
+</head>
+<body>
+    <h1> Favorites </h1>
+    <div id="top">
+        <input type="text" id="query">
+    </div>
+    <div id="results"> </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="/~jacoby/MB_Demo/js/mustache.js"></script>
+
+    <script>
+
+    $(function() { 
+        var faves = {} ;
+        faves.code = {} ;
+        faves.templates = {} ;
+        faves.urls = {} ;
+
+        faves.templates.entry = [
+            '<div class="entry">' ,
+            '<a target="_blank" class="screen_name" href="https://twitter.com/{{ user_screen_name }}">@{{ user_screen_name }}</a>' ,
+            ' {{ text }} ' ,
+            '<a target="_blank" href="https://twitter.com/{{ user_screen_name }}/status/{{ twitter_id }}">link</a>' ,
+            '</div>'
+            ].join("\n" ) ;
+
+        faves.urls.api = '/~jacoby/Favorites/api_1.0/favorites/' ;
+
+        faves.code.redraw = function () {
+            var q = $( '#query' ).val() ;
+            console.log( q ) ;
+            if ( q.length > 1 ) {
+                $( '#results' ).html( '' ) ;
+                $.get(
+                    faves.urls.api + q ,
+                    function ( data ) {
+                        var results = data.data ;
+                        console.dir( data ) ;
+                        for ( i in results ) {
+                            var entry = results[i] ;
+                            console.log( entry ) ;
+                            var div = Mustache.to_html ( faves.templates.entry , entry ) ; 
+                            $( '#results' ).prepend( div )
+                            }
+
+                        } ,
+                    'json'
+                    ) ;
+                }
+            else {
+                $( '#results' ).html( '' ) ;
+                }
+            } ;
+        $( '#query' ).keyup(   function () { faves.code.redraw() } ) ; 
+        // $( '#query' ).keydown( function () { faves.code.redraw() } ) ; 
+        // $( '#query' ).change(  function () { faves.code.redraw() } ) ; 
+
+        } ) ;
+
+    </script>
+</body>

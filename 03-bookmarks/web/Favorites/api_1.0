@@ -1,0 +1,58 @@
+#!/home/jacoby/perl-5.18.0/bin/perl
+
+use feature qw{ say } ;
+use strict ;
+use warnings ;
+use utf8 ;
+
+use CGI ;
+use JSON qw{ encode_json } ;
+use Data::Dumper ;
+
+use lib '/home/jacoby/lib' ;
+use DB ;
+
+binmode STDOUT, ':utf8' ;
+
+my $cgi = new CGI ;
+my $param = map { $cgi->param( $_ ) } $cgi->param() ;
+my $path_info ;
+@$path_info = grep { m{\w} } split m{/} , $cgi->path_info() ;
+
+say 'content/type: text/plain' ;
+say '' ;
+
+my $dispatch ;
+
+$dispatch->{ favorites } = \&favorites ;
+
+if ( $path_info->[ 0 ] && $dispatch->{ $path_info->[ 0 ] } ) { 
+    print encode_json $dispatch->{ $path_info->[ 0 ] }->( $param , $path_info ) ;
+    }
+else {
+    print encode_json {
+        param     => $param,
+        path_info => $path_info,
+        } ;
+    }
+
+sub favorites {
+    my ( $param , $path_info  ) = @_ ;
+    my $results = { status => 0 } ;
+    if ( $path_info->[ 1 ] ) {
+        my $sql = <<'SQL' ;
+    SELECT * 
+    FROM twitter_favorites
+    WHERE text like ?
+    OR user_screen_name like ?
+    ORDER BY created
+    DESC LIMIT 20
+SQL
+        my $string = lc $path_info->[ 1 ] ;
+        my $like = '%' . $string . '%' ;
+        my $r = db_hashref( $sql , 'id' , $like , $like ) ;
+        $results->{ status } = 1 ;
+        $results->{ data } = $r ;
+        }
+    return $results ;
+}
